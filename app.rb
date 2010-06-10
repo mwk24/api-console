@@ -1,6 +1,7 @@
 class App
   
   FB_HOST = 'https://graph.facebook.com'
+  @@auth_tok = ''
   
   def self.index(env)
     
@@ -21,7 +22,7 @@ class App
                       "client_id=" + App::db_val('appid') +
                       "&redirect_uri=http://" + env['SERVER_NAME'] + '/auth'
                       
-      [302, {"Location" => fb_endpoint}]
+      [302, {"Location" => fb_endpoint}, '']
       
     else
       # should be receiving data
