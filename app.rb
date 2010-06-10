@@ -1,6 +1,8 @@
 class App
   
   FB_HOST = 'https://graph.facebook.com'
+  APP_ID = '146704267370'
+  APP_SECRET = '7305580388d784ca83ce3661ddefeea6'
   @@auth_tok = ''
   
   def self.index(env)
