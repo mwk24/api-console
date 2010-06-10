@@ -8,8 +8,8 @@ class App
   def self.index(env)
     
     App::render_view('index', 
-                     {'APPID' => App::db_val('appid'),
-                      'AUTHTOK' => App::db_val('authtok') })
+                     {'APPID' => App::APP_ID,
+                      'AUTHTOK' => @@auth_tok })
   end
   
   def self.auth(env)
@@ -21,7 +21,7 @@ class App
     if initiate
       # do the redirect
       fb_endpoint = App::FB_HOST + "/oauth/authorize?" + 
-                      "client_id=" + App::db_val('appid') +
+                      "client_id=" + App::APP_ID +
                       "&redirect_uri=http://" + env['SERVER_NAME'] + '/auth'
                       
       [302, {"Location" => fb_endpoint}, '']
