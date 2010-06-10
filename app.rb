@@ -1,5 +1,7 @@
 class App
   
+  FB_HOST = 'https://graph.facebook.com'
+  
   def self.index(env)
     
     App::render_view('index', 
@@ -15,9 +17,9 @@ class App
     
     if initiate
       # do the redirect
-      fb_endpoint = "https://graph.facebook.com/oauth/authorize?" + 
+      fb_endpoint = App::FB_HOST + "/oauth/authorize?" + 
                       "client_id=" + App::db_val('appid') +
-                      "&redirect_uri=http://www.example.com"
+                      "&redirect_uri=http://" + env['SERVER_NAME'] + '/auth'
                       
       [302, {"Location" => fb_endpoint}]
       
