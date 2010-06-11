@@ -1,6 +1,11 @@
 <div class='box'>
 
   <p>Access token: !!TOK!!</p>
+  
+  <form action='/auth'>
+    <input type='submit' value='Get access token'></submit>
+  </form>
+  
   <p>Call type: <span id='api_type'>!!TYPE!!</span> !!TOKEN_INFO!!</p>
   <p>Queried URL: !!URL!!</p>
   
@@ -39,9 +44,7 @@
       if (this.value == api_type) {
         this.checked = true;
       }
-      
     });
-    
   }
 </script>
   

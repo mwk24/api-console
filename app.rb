@@ -57,10 +57,12 @@ class App
         return [302, {"Content-Type" => "text/html", "Location" => verify_endpoint}, '']
       
       end
-      
-      # if we got here we should have a token, so redirect to api
-      return [302, {"Content-Type" => "text/html", "Location" => '/api'}, '']
+
     end
+    
+    # if we got here we should have a token, so redirect to api
+    return [302, {"Content-Type" => "text/html", "Location" => '/api'}, '']
+    
   end
   
   def self.api(env)
