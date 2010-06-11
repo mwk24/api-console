@@ -1,5 +1,8 @@
 class App
   
+  require 'net/http'
+  require 'uri'
+  
   FB_HOST = 'https://graph.facebook.com'
   APP_HOST = 'http://strong-sunrise-54.heroku.com'
   APP_ID = '146704267370'
@@ -16,17 +19,30 @@ class App
   
   def self.auth(env)
     
+    redirect_uri = env['rack.url_scheme'] + "://" + env['HTTP_HOST'] + '/auth'
+    
     if App::query_val(env, 'initiate') == '1'
       # do the redirect
-      fb_endpoint = App::FB_HOST + "/oauth/authorize?" + 
-                      "client_id=" + App::APP_ID +
-                      "&redirect_uri=" + env['rack.url_scheme'] + "://" + env['HTTP_HOST'] + '/auth'
+      verify_endpoint = App::FB_HOST + "/oauth/authorize?" + 
+                        "client_id=" + App::APP_ID +
+                        "&redirect_uri=" + redirect_uri
                       
-      [302, {"Content-Type" => "text/html", "Location" => fb_endpoint}, '']
+      [302, {"Content-Type" => "text/html", "Location" => verify_endpoint}, '']
       
     else
       # should be receiving data
-      App::render_view('api', {"TOK" => App::query_val(env, 'code') })
+      code = App::query_val(env, 'code')
+      
+      # now exchange for access token
+      token_endpoint = App::FB_HOST + "/oauth/access_token?" +
+                       "client_id=" + App::APP_ID +
+                       "&redirect_uri=" + redirect_uri + 
+                       "&client_secret=" + App::APP_SECRET +
+                       "&code=" + code
+                       
+      token = Net::HTTP.get(URI.parse(token_endpoint))
+      
+      App::render_view('api', {"TOK" => App::query_val(env, 'token') })
     end
   end
   
