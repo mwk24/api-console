@@ -11,22 +11,22 @@ class App
   APP_HOST = 'http://strong-sunrise-54.heroku.com'
   APP_ID = '146704267370'
   APP_SECRET = '7305580388d784ca83ce3661ddefeea6'
-  @@access_tok = ''
+
   
   def self.index(env)
 
     App::render_view('index', 
-                     {'APPID' => App::APP_ID,
-                      'AUTHTOK' => @@access_tok},
+                     {'APPID' => App::APP_ID},
                       env.inspect)
   end
   
   def self.auth(env)
     
     redirect_uri = env['rack.url_scheme'] + "://" + env['HTTP_HOST'] + '/auth'
+    access_token = App::cookie_val(env, 'access_token')
     
     # no token yet
-    if @@access_tok.empty?
+    unless (access_token and !access_token.empty?)
       
       code = App::query_val(env, 'code')
       
@@ -45,7 +45,7 @@ class App
       
         unless data.match('error')
           # store token
-          @@access_tok = App::extract_val(data, 'access_token')
+          access_token = App::extract_val(data, 'access_token')
         end
       
       # no code yet - need to redirect and get one
@@ -61,14 +61,16 @@ class App
     end
     
     # if we got here we should have a token, so redirect to api
-    return [302, {"Content-Type" => "text/html", "Location" => '/api'}, '']
-    
+    return [302, {"Content-Type" => "text/html", "Location" => '/api', "Set-Cookie" => "access_token=#{access_token}"}, '']
+  
   end
   
   def self.api(env)
     
     api_call = App::query_val(env, 'req')
     api_type = App::query_val(env, 'api_type')
+    
+    access_token = App::cookie_val(env, 'access_token')
     
     if api_call and api_type
     
@@ -83,11 +85,11 @@ class App
         path = '/method/' + api_call
       end
       
-      if App::query_val(env, 'no_tok')
+      if App::query_val(env, 'no_tok') or !access_token
         full_path = path
         tok_info = '(no token)'
       else
-        full_path = path + '&access_token=' + @@access_tok
+        full_path = path + '&access_token=' + access_token
       end
       
         
@@ -102,25 +104,38 @@ class App
     end
     
     App::render_view('api', 
-                     {'TOK' => @@access_tok, 'REQ' => api_call, 'RET' => data, 'URL' => req_url, 'ELAPSED' => elapsed.to_s, 'TYPE' => api_type, 'TOKEN_INFO' => tok_info })
+                     {'TOK' => access_token, 'REQ' => api_call, 'RET' => data, 'URL' => req_url, 'ELAPSED' => elapsed.to_s, 'TYPE' => api_type, 'TOKEN_INFO' => tok_info }, env.inspect)
     
   end
   
-  def self.extract_val(serialized, key, default=nil)
+  def self.extract_val(serialized, key, delimiter='&', default=nil)
     
-    params = serialized.strip.split('&')   
+    unless serialized 
+      return default
+    end
+    
+    params = serialized.strip.split(delimiter)
     params.each do |p|
-      split = p.split('=')
-      if split[0] == key
-        return split[1].strip rescue default
+      parts = p.split('=')
+      if parts[0].strip == key.strip
+        val = parts[1].split(';')[0].strip rescue default
+        # might be duplicates with some empty
+        if val
+          return val
+        end
       end
     end
     return default
   end
   
+  def self.cookie_val(env, key)
+    cookie = env['HTTP_COOKIE']
+    return App::extract_val(cookie, key, ';')
+  end
+    
   def self.query_val(env, key, default=nil)
     query = env['QUERY_STRING']
-    return App::extract_val(query, key, default)
+    return App::extract_val(query, key, '&', default)
   end
   
   def self.render_view(name, values={}, dump='', cookie='')
@@ -149,7 +164,7 @@ class App
     # dump area for general inspection
     markup += ('<br/><br/><br/>--------------<br/>' + dump)
     
-    return [200, {"Content-Type" => "text/html", "Set-Cookie" => "#{cookie}\naccess_tok=#{@@access_tok}"}, markup]
+    return [200, {"Content-Type" => "text/html", "Set-Cookie" => cookie}, markup]
   
   end
   
@@ -160,9 +175,9 @@ class App
     entries = f.readlines
     
     entries.each do |e|
-      split = e.split(':')
-      if split[0] == key
-        return split[1].strip
+      parts = e.split(':')
+      if parts[0] == key
+        return parts[1].strip
       end
     end
     return ''

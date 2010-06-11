@@ -3,8 +3,10 @@
   <p>Access token: !!TOK!!</p>
   
   <form action='/auth'>
-    <input type='submit' value='Get access token'></submit>
+    <input type='submit' value='Get access token'/>
   </form>
+  
+  <button onclick="eraseATok();">Clear access token</button>
   
   <p>Call type: <span id='api_type'>!!TYPE!!</span> !!TOKEN_INFO!!</p>
   <p>Queried URL: !!URL!!</p>
@@ -46,5 +48,11 @@
       }
     });
   }
+  
+  function eraseATok() {
+    eraseCookie('access_token');
+    location.reload(true);
+  }
+  
 </script>
   
