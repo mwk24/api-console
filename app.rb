@@ -4,7 +4,8 @@ class App
   require 'net/https'
   require 'uri'
   
-  FB_HOST = 'https://graph.facebook.com'
+  FB_DOMAIN = 'graph.facebook.com'
+  FB_BASE = 'https://' + FB_DOMAIN
   APP_HOST = 'http://strong-sunrise-54.heroku.com'
   APP_ID = '146704267370'
   APP_SECRET = '7305580388d784ca83ce3661ddefeea6'
@@ -24,7 +25,7 @@ class App
     
     if App::query_val(env, 'initiate') == '1'
       # do the redirect
-      verify_endpoint = App::FB_HOST + "/oauth/authorize?" + 
+      verify_endpoint = App::FB_BASE + "/oauth/authorize?" + 
                         "client_id=" + App::APP_ID +
                         "&redirect_uri=" + redirect_uri
                       
@@ -40,23 +41,18 @@ class App
                        "&redirect_uri=" + redirect_uri + 
                        "&client_secret=" + App::APP_SECRET +
                        "&code=" + code
-                       
-      return App::render_view('api', {}, token_path)
       
-      http = Net::HTTP.new(FB_HOST, 443)
+      http = Net::HTTP.new(FB_DOMAIN, 443)
       http.use_ssl = true
       
       res, data = http.get(token_path)
       
-      if data.match('error')
-        ret = '[FAIL]'
-      else
-        ret = data
+      unless data.match('error')
         # store token
-        @@access_tok = data
-      end                 
+        @@access_tok = App::extract_val(data, 'access_token')
+      end
       
-      App::render_view('api', {"TOK" => ret })
+      App::render_view('api', {"TOK" => @@access_tok }, data)
     end
   end
   
@@ -80,11 +76,9 @@ class App
   end
   
   
-  def self.query_val(env, key)
-  
-    query = env['QUERY_STRING']
-    params = query.split('&')
-        
+  def self.extract_val(serialized, key)
+    
+    params = serialized.strip.split('&')   
     params.each do |p|
       split = p.split('=')
       if split[0] == key
@@ -92,6 +86,13 @@ class App
       end
     end
     return nil
+  end
+  
+  def self.query_val(env, key)
+  
+    query = env['QUERY_STRING']
+    return App::extract_val(query, key)
+    
   end
   
   def self.render_view(name, values={}, dump='')
