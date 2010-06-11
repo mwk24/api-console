@@ -40,6 +40,8 @@ class App
                        "&redirect_uri=" + redirect_uri + 
                        "&client_secret=" + App::APP_SECRET +
                        "&code=" + code
+                       
+      return App::render_view('api', {}, token_path)
       
       http = Net::HTTP.new(FB_HOST, 443)
       http.use_ssl = true
@@ -92,7 +94,7 @@ class App
     return nil
   end
   
-  def self.render_view(name, values={})
+  def self.render_view(name, values={}, dump='')
     
     view_dir = "views"
     
@@ -114,6 +116,9 @@ class App
       v ||= '[EMPTY]'
       markup.gsub!("!!#{k}!!", v)
     end
+    
+    # dump some stuff
+    markup += dump
     
     return [200, {"Content-Type" => "text/html"}, markup]
   
