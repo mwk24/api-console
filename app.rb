@@ -1,19 +1,20 @@
 class App
   
   require 'net/http'
+  require 'net/https'
   require 'uri'
   
   FB_HOST = 'https://graph.facebook.com'
   APP_HOST = 'http://strong-sunrise-54.heroku.com'
   APP_ID = '146704267370'
   APP_SECRET = '7305580388d784ca83ce3661ddefeea6'
-  @@auth_tok = ''
+  @@access_tok = ''
   
   def self.index(env)
     
     App::render_view('index', 
                      {'APPID' => App::APP_ID,
-                      'AUTHTOK' => @@auth_tok,
+                      'AUTHTOK' => @@access_tok,
                       'ENV' => env.inspect })
   end
   
@@ -34,15 +35,26 @@ class App
       code = App::query_val(env, 'code')
       
       # now exchange for access token
-      token_endpoint = App::FB_HOST + "/oauth/access_token?" +
+      token_path = "/oauth/access_token?" +
                        "client_id=" + App::APP_ID +
                        "&redirect_uri=" + redirect_uri + 
                        "&client_secret=" + App::APP_SECRET +
                        "&code=" + code
-                       
-      token = Net::HTTP.get(URI.parse(token_endpoint))
       
-      App::render_view('api', {"TOK" => App::query_val(env, 'token') })
+      http = Net::HTTP.new(FB_HOST, 443)
+      http.use_ssl = true
+      
+      res, data = http.get(token_path)
+      
+      if data.match('error')
+        ret = '[FAIL]'
+      else
+        ret = data
+        # store token
+        @@access_tok = data
+      end                 
+      
+      App::render_view('api', {"TOK" => ret })
     end
   end
   
