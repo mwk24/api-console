@@ -16,7 +16,16 @@
 <div class='box'>
 
   <form id='api' action='/api'>
-    <p>Call: <textarea cols='100' name='req'>!!REQ!!</textarea>
+    <p>Call: <textarea id='req' cols='100' name='req'>!!REQ!!</textarea>
+    
+    <div class='examples'>  
+      <p>Graph examples: <a href='#' onclick='loadExample(this, "graph");'>4</a>&nbsp&nbsp&nbsp<a href='#' onclick='loadExample(this, "graph");'>706023/photos</a></p>
+      <p>Old examples: <a href='#' onclick='loadExample(this, "old");'>users.getInfo?uids=4&amp;fields=name</a></p>
+      <p>FQL examples: <a href='#' onclick='loadExample(this, "fql");'>select name from user where uid=4</a></p>
+    </div>
+    
+    <br/>
+     
     <p>Graph: <input type='radio' name='api_type' value='graph'/></p>
     <p>Old: <input type='radio' name='api_type' value='old'/></p>
     <p>FQL: <input type='radio' name='api_type' value='fql'/></p>
@@ -39,7 +48,13 @@
 <script>
   window.onload = function() {
     var api_type = $("#api_type").html();
-    
+    if (api_type == '') {
+      api_type = 'graph';
+    }
+    setApiType(api_type);
+  }
+  
+  function setApiType(api_type) {
     var options = $("form#api input:radio");
     
     options.each(function() {
@@ -53,6 +68,13 @@
     eraseCookie('access_token');
     location.reload(true);
   }
+  
+  function loadExample(elem, api_type) {
+    var e = elem.innerHTML;
+    $('#req').html(e);
+    setApiType(api_type);
+  }
+    
   
 </script>
   

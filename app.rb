@@ -73,7 +73,7 @@ class App
     access_token = App::cookie_val(env, 'access_token')
     
     if api_call and api_type
-    
+      
       if api_type == 'fql'
         domain = App::FB_OLD_DOMAIN
         path = '/method/fql.query?query=' + api_call
@@ -82,7 +82,7 @@ class App
         path = '/' + CGI.unescape(api_call)
       elsif api_type == 'old'
         domain = App::FB_OLD_DOMAIN
-        path = '/method/' + api_call
+        path = '/method/' + CGI.unescape(api_call)
       end
       
       if App::query_val(env, 'no_tok') or !access_token
