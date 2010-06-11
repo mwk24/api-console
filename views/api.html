@@ -1,14 +1,47 @@
-<p>Access token: !!TOK!!</p>
+<div class='box'>
 
-<p>Queried URL: !!REQ!!</p>
-
-<p>Return value: !!RET!!</p>
-
-<form action='/api'>
-  <input type='textarea' name='api'/>
-  <input type='radio' name='api_type' value='fql'/>
-  <input type='radio' name='api_type' value='api'/>
-  <input type='submit'/>
-</form>
+  <p>Access token: !!TOK!!</p>
+  <p>Call type: <span id='api_type'>!!TYPE!!</span> !!TOKEN_INFO!!</p>
+  <p>Queried URL: !!URL!!</p>
   
+</div>
 
+<div class='box'>
+
+  <form id='api' action='/api'>
+    <p>Call: <textarea cols='100' name='req'>!!REQ!!</textarea>
+    <p>Graph: <input type='radio' name='api_type' value='graph'/></p>
+    <p>Old: <input type='radio' name='api_type' value='old'/></p>
+    <p>FQL: <input type='radio' name='api_type' value='fql'/></p>
+    
+    <p>Omit access token: <input type='checkbox' name='no_tok' /></p>
+    <br/>
+    
+    <input type='submit'/>
+  </form>
+
+</div>
+
+
+<div class='box'>
+  <p>Return value: !!RET!!</p>
+  <p>API roundtrip: !!ELAPSED!! secs</p>
+</div>
+
+
+<script>
+  window.onload = function() {
+    var api_type = $("#api_type").html();
+    
+    var options = $("form#api input:radio");
+    
+    options.each(function() {
+      if (this.value == api_type) {
+        this.checked = true;
+      }
+      
+    });
+    
+  }
+</script>
+  

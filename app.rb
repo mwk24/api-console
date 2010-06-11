@@ -3,16 +3,18 @@ class App
   require 'net/http'
   require 'net/https'
   require 'uri'
+  require 'cgi'
   
   FB_DOMAIN = 'graph.facebook.com'
   FB_BASE = 'https://' + FB_DOMAIN
-  FQL_BASE = 'http://api.facebook.com/TODO'
+  FB_OLD_DOMAIN = 'api.facebook.com'
   APP_HOST = 'http://strong-sunrise-54.heroku.com'
   APP_ID = '146704267370'
   APP_SECRET = '7305580388d784ca83ce3661ddefeea6'
   @@access_tok = ''
   
   def self.index(env)
+
     App::render_view('index', 
                      {'APPID' => App::APP_ID,
                       'AUTHTOK' => @@access_tok},
@@ -56,54 +58,67 @@ class App
       
       end
       
-      # if we got here we should have a token
-      App::render_view('api', {"TOK" => @@access_tok }, data)
+      # if we got here we should have a token, so redirect to api
+      return [302, {"Content-Type" => "text/html", "Location" => '/api'}, '']
     end
   end
   
   def self.api(env)
     
-    api_call = App::query_val(env, 'api')
+    api_call = App::query_val(env, 'req')
     api_type = App::query_val(env, 'api_type')
     
     if api_call and api_type
     
       if api_type == 'fql'
-        base = App::FQL_BASE
-        path = '/' + api_call + @@access_tok
-      else
-        base = App::FB_BASE
-        path = '/' + api_call + @@access_tok
+        domain = App::FB_OLD_DOMAIN
+        path = '/method/fql.query?query=' + api_call
+      elsif api_type == 'graph'
+        domain = App::FB_DOMAIN
+        path = '/' + CGI.unescape(api_call)
+      elsif api_type == 'old'
+        domain = App::FB_OLD_DOMAIN
+        path = '/method/' + api_call
       end
-    
-      http = Net::HTTP.new(base, 443)
+      
+      if App::query_val(env, 'no_tok')
+        full_path = path
+        tok_info = '(no token)'
+      else
+        full_path = path + '&access_token=' + @@access_tok
+      end
+      
+        
+      http = Net::HTTP.new(domain, 443)
       http.use_ssl = true
-  
-      res, data = http.get(path)
-    
-      App::render_view('api', {'TOK' => @@access_tok, 'REQ' => base + path, 'RET' => data})
-    
-    else
-      App::render_view('api', {'TOK' => @@access_tok})
+      
+      start = Time.now
+      res, data = http.get(full_path)
+      elapsed = Time.now - start
+      
+      req_url = domain + path
     end
+    
+    App::render_view('api', 
+                     {'TOK' => @@access_tok, 'REQ' => api_call, 'RET' => data, 'URL' => req_url, 'ELAPSED' => elapsed.to_s, 'TYPE' => api_type, 'TOKEN_INFO' => tok_info })
     
   end
   
-  def self.extract_val(serialized, key)
+  def self.extract_val(serialized, key, default=nil)
     
     params = serialized.strip.split('&')   
     params.each do |p|
       split = p.split('=')
       if split[0] == key
-        return split[1].strip rescue nil
+        return split[1].strip rescue default
       end
     end
-    return nil
+    return default
   end
   
-  def self.query_val(env, key)
+  def self.query_val(env, key, default=nil)
     query = env['QUERY_STRING']
-    return App::extract_val(query, key)
+    return App::extract_val(query, key, default)
   end
   
   def self.render_view(name, values={}, dump='', cookie='')
@@ -125,8 +140,8 @@ class App
     
     # Now sub the values
     values.each do |k, v|
-      v ||= '[EMPTY]'
-      markup.gsub!("!!#{k}!!", v)
+      v ||= ''
+      markup.gsub!("!!#{k}!!", CGI.unescape(v))
     end
     
     # dump area for general inspection
