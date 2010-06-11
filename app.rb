@@ -50,9 +50,12 @@ class App
       
       # no code yet - need to redirect and get one
       else
+        perms = App::query_val(env, 'perms', '')
+        
         verify_endpoint = App::FB_BASE + "/oauth/authorize?" + 
                           "client_id=" + App::APP_ID +
-                          "&redirect_uri=" + redirect_uri
+                          "&redirect_uri=" + redirect_uri +
+                          "&scope=" + perms
 
         return [302, {"Content-Type" => "text/html", "Location" => verify_endpoint}, '']
       

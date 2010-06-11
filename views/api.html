@@ -3,7 +3,7 @@
   <p>Access token: !!TOK!!</p>
   
   <form action='/auth'>
-    <input type='submit' value='Get access token'/>
+    <input type='submit' value='Get access token'/>&nbsp;<small>Perms string:&nbsp;<input type='text' name='perms' size='100'/></small>
   </form>
   
   <button onclick="eraseATok();">Clear access token</button>
@@ -16,10 +16,10 @@
 <div class='box'>
 
   <form id='api' action='/api'>
-    <p>Call: <textarea id='req' cols='100' name='req'>!!REQ!!</textarea>
+    <p>Call: <input type='text' id='req' size='100' name='req'/ value='!!REQ!!'/></p>
     
     <div class='examples'>  
-      <p>Graph examples: <a href='#' onclick='loadExample(this, "graph");'>4</a>&nbsp&nbsp&nbsp<a href='#' onclick='loadExample(this, "graph");'>706023/photos</a></p>
+      <p>Graph examples: <a href='#' onclick='loadExample(this, "graph");'>4</a>&nbsp;&nbsp;&nbsp;<a href='#' onclick='loadExample(this, "graph");'>706023/photos</a></p>
       <p>Old examples: <a href='#' onclick='loadExample(this, "old");'>users.getInfo?uids=4&amp;fields=name</a></p>
       <p>FQL examples: <a href='#' onclick='loadExample(this, "fql");'>select name from user where uid=4</a></p>
     </div>
@@ -71,7 +71,7 @@
   
   function loadExample(elem, api_type) {
     var e = elem.innerHTML;
-    $('#req').html(e);
+    $('#req')[0].value = e;
     setApiType(api_type);
   }
     
