@@ -1,6 +1,7 @@
 class App
   
   FB_HOST = 'https://graph.facebook.com'
+  APP_HOST = 'http://strong-sunrise-54.heroku.com'
   APP_ID = '146704267370'
   APP_SECRET = '7305580388d784ca83ce3661ddefeea6'
   @@auth_tok = ''
@@ -9,26 +10,23 @@ class App
     
     App::render_view('index', 
                      {'APPID' => App::APP_ID,
-                      'AUTHTOK' => @@auth_tok })
+                      'AUTHTOK' => @@auth_tok,
+                      'ENV' => env.inspect })
   end
   
   def self.auth(env)
     
-    query = env['QUERY_STRING']
-    
-    initiate = query.match('initiate')
-    
-    if initiate
+    if App::query_val(env, 'initiate') == '1'
       # do the redirect
       fb_endpoint = App::FB_HOST + "/oauth/authorize?" + 
                       "client_id=" + App::APP_ID +
-                      "&redirect_uri=http://" + env['SERVER_NAME'] + '/auth'
+                      "&redirect_uri=" + env['rack.url_scheme'] + "://" + env['HTTP_HOST'] + '/auth'
                       
-      [302, {"Location" => fb_endpoint}, '']
+      [302, {"Content-Type" => "text/html", "Location" => fb_endpoint}, '']
       
     else
       # should be receiving data
-      App::render_view('api', {"ENV" => env.inspect})
+      App::render_view('api', {"TOK" => App::query_val(env, 'code') })
     end
   end
   
@@ -50,7 +48,21 @@ class App
     end
     return ''
   end
-
+  
+  
+  def self.query_val(env, key)
+  
+    query = env['QUERY_STRING']
+    params = query.split('&')
+        
+    params.each do |p|
+      split = p.split('=')
+      if split[0] == key
+        return split[1].strip
+      end
+    end
+    return nil
+  end
   
   def self.render_view(name, values={})
     
@@ -59,18 +71,19 @@ class App
     base = ''
     # Always wrap in base.html
     File.open("#{view_dir}/base.html", "r") do |f|
-      base += f.read
+      base = f.read
     end
     
     view = ''
     File.open("#{view_dir}/#{name}.html") do |f|
-      view += f.read
+      view = f.read
     end
     
-    markup = base.gsub("!!YIELD!!", view)
+    markup = base.gsub("!!BODY!!", view)
     
     # Now sub the values
     values.each do |k, v|
+      v ||= '[EMPTY]'
       markup.gsub!("!!#{k}!!", v)
     end
     
