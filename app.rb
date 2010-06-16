@@ -6,15 +6,13 @@ class App
   require 'cgi'
   
   FB_DOMAIN = 'graph.facebook.com'
-  FB_BASE = 'https://' + FB_DOMAIN
+  FB_DEV_DOMAIN = 'graph.dev.facebook.com' 
   FB_OLD_DOMAIN = 'api.facebook.com'
   APP_HOST = 'http://strong-sunrise-54.heroku.com'
   APP_ID = '146704267370'
   APP_SECRET = '7305580388d784ca83ce3661ddefeea6'
-
   
   def self.index(env)
-
     App::render_view('index', 
                      {'APPID' => App::APP_ID},
                       env.inspect)
@@ -26,7 +24,7 @@ class App
     access_token = App::cookie_val(env, 'access_token')
     
     # no token yet
-    unless (access_token and !access_token.empty?)
+    unless (access_token and !access_token.empty? and !App::query_val(env, 'refresh'))
       
       code = App::query_val(env, 'code')
       
@@ -37,7 +35,7 @@ class App
                          "&redirect_uri=" + redirect_uri + 
                          "&client_secret=" + App::APP_SECRET +
                          "&code=" + code
-      
+        
         http = Net::HTTP.new(FB_DOMAIN, 443)
         http.use_ssl = true
       
@@ -52,7 +50,7 @@ class App
       else
         perms = App::query_val(env, 'perms', '')
         
-        verify_endpoint = App::FB_BASE + "/oauth/authorize?" + 
+        verify_endpoint = "https://" + App::FB_DEV_DOMAIN + "/oauth/authorize?" + 
                           "client_id=" + App::APP_ID +
                           "&redirect_uri=" + redirect_uri +
                           "&scope=" + perms
@@ -64,7 +62,9 @@ class App
     end
     
     # if we got here we should have a token, so redirect to api
-    return [302, {"Content-Type" => "text/html", "Location" => '/api', "Set-Cookie" => "access_token=#{access_token}"}, '']
+    return [302, {"Content-Type" => "text/html",
+                  "Location" => '/api',
+                  "Set-Cookie" => "access_token=#{access_token}"}, '']
   
   end
   
@@ -95,6 +95,9 @@ class App
         full_path = path + '&access_token=' + access_token
       end
       
+      if App::query_val(env, 'dev_mode')
+        domain = domain.gsub('.facebook.', '.dev.facebook.')
+      end
         
       http = Net::HTTP.new(domain, 443)
       http.use_ssl = true
@@ -107,7 +110,14 @@ class App
     end
     
     App::render_view('api', 
-                     {'TOK' => access_token, 'REQ' => api_call, 'RET' => data, 'URL' => req_url, 'ELAPSED' => elapsed.to_s, 'TYPE' => api_type, 'TOKEN_INFO' => tok_info }, env.inspect)
+                     {'TOK' => access_token,
+                      'REQ' => api_call,
+                      'RET' => data,
+                      'URL' => req_url,
+                      'ELAPSED' => elapsed.to_s,
+                      'TYPE' => api_type,
+                      'TOKEN_INFO' => tok_info },
+                      env.inspect)
     
   end
   
@@ -132,13 +142,11 @@ class App
   end
   
   def self.cookie_val(env, key)
-    cookie = env['HTTP_COOKIE']
-    return App::extract_val(cookie, key, ';')
+    App::extract_val(env['HTTP_COOKIE'], key, ';')
   end
     
   def self.query_val(env, key, default=nil)
-    query = env['QUERY_STRING']
-    return App::extract_val(query, key, '&', default)
+    App::extract_val(env['QUERY_STRING'], key, '&', default)
   end
   
   def self.render_view(name, values={}, dump='', cookie='')

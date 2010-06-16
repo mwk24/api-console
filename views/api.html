@@ -3,7 +3,8 @@
   <p>Access token: !!TOK!!</p>
   
   <form action='/auth'>
-    <input type='submit' value='Get access token'/>&nbsp;<small>Perms string:&nbsp;<input type='text' name='perms' size='100'/></small>
+    <input type='hidden' name='refresh' value='1'/>
+    <input type='submit' onclick="eraseATok();return true;" value='Get access token'/>&nbsp;<small>Perms string:&nbsp;<input type='text' name='perms' size='100'/></small>
   </form>
   
   <button onclick="eraseATok();">Clear access token</button>
@@ -30,7 +31,8 @@
     <p>Old: <input type='radio' name='api_type' value='old'/></p>
     <p>FQL: <input type='radio' name='api_type' value='fql'/></p>
     
-    <p>Omit access token: <input type='checkbox' name='no_tok' /></p>
+    <p>Omit access token: <input type='checkbox' name='no_tok'/></p>
+    <p>Use dev: (won't work from non-fb server)<input type='checkbox' name='dev_mode'/></p>
     <br/>
     
     <input type='submit'/>
