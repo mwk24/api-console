@@ -73,7 +73,8 @@
   
   function loadExample(elem, api_type) {
     var e = elem.innerHTML;
-    $('#req')[0].value = e;
+    // html decode this guy
+    $('#req')[0].value = e.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>');
     setApiType(api_type);
   }
     

@@ -32,7 +32,7 @@ class App
       if App::query_val(env, 'code')
         token_path = "/oauth/access_token?" +
                          "client_id=" + App::APP_ID +
-                         "&redirect_uri=" + redirect_uri + 
+                         "&redirect_uri=" + redirect_uri +
                          "&client_secret=" + App::APP_SECRET +
                          "&code=" + code
         
@@ -50,7 +50,7 @@ class App
       else
         perms = App::query_val(env, 'perms', '')
         
-        verify_endpoint = "https://" + App::FB_DEV_DOMAIN + "/oauth/authorize?" + 
+        verify_endpoint = "https://" + App::FB_DOMAIN + "/oauth/authorize?" +
                           "client_id=" + App::APP_ID +
                           "&redirect_uri=" + redirect_uri +
                           "&scope=" + perms

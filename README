@@ -1,0 +1,12 @@
+This is Rack app. To run it, you can either:
+
+- Push it to heroku, it will fire up automatically
+
+- Run locally
+$sudo gem install rack
+[install other gems]
+$rackup config.ru
+
+- Roll your own server
+
+Better to put your own apps details in, but nbd
